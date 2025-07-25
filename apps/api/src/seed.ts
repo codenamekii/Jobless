@@ -1,4 +1,5 @@
 import { PrismaClient } from '@jobless/database';
+import 'dotenv/config';
 
 const prisma = new PrismaClient();
 
