@@ -2,10 +2,12 @@ import cors from '@fastify/cors';
 import { PrismaClient } from '@jobless/database';
 import 'dotenv/config';
 import Fastify from 'fastify';
+import { authenticate } from './middleware/auth';
+import { authRoutes } from './routes/auth';
 
-// Initialize Fastify with simple logger
+// Initialize Fastify
 const fastify = Fastify({
-  logger: true // Simple logger tanpa pino-pretty
+  logger: true
 });
 
 // Initialize Prisma
@@ -39,17 +41,41 @@ async function registerRoutes() {
     return {
       status: 'OK',
       timestamp: new Date().toISOString(),
-      database: 'Connected'
+      database: 'Connected',
+      environment: process.env.NODE_ENV || 'development'
     };
   });
 
-  // Basic applications route
-  fastify.get('/api/applications', async (request, reply) => {
+  // Auth routes
+  await fastify.register(authRoutes, { prefix: '/api/auth' });
+
+  // Protected applications route
+  fastify.get('/api/applications', {
+    preHandler: [authenticate]
+  }, async (request, reply) => {
     try {
       const applications = await fastify.prisma.application.findMany({
+        where: {
+          userId: request.user!.userId
+        },
         include: {
-          user: {
-            select: { id: true, fullName: true, email: true }
+          documents: true,
+          reminders: {
+            where: {
+              isCompleted: false,
+              reminderDate: {
+                gte: new Date()
+              }
+            },
+            orderBy: {
+              reminderDate: 'asc'
+            },
+            take: 1
+          },
+          _count: {
+            select: {
+              statusHistory: true
+            }
           }
         },
         orderBy: { applicationDate: 'desc' }
@@ -70,22 +96,32 @@ async function registerRoutes() {
     }
   });
 
-  // Create application
-  fastify.post('/api/applications', async (request, reply) => {
+  // Create application (protected)
+  fastify.post('/api/applications', {
+    preHandler: [authenticate]
+  }, async (request, reply) => {
     try {
-      const { userId, companyName, position, ...otherData } = request.body as any;
+      const { companyName, position, ...otherData } = request.body as any;
 
       const application = await fastify.prisma.application.create({
         data: {
-          userId,
+          userId: request.user!.userId,
           companyName,
           position,
           ...otherData
         },
         include: {
-          user: {
-            select: { id: true, fullName: true, email: true }
-          }
+          documents: true,
+          reminders: true
+        }
+      });
+
+      // Create initial status history
+      await fastify.prisma.applicationStatusHistory.create({
+        data: {
+          applicationId: application.id,
+          toStatus: application.status,
+          reason: 'Initial application'
         }
       });
 
@@ -104,31 +140,104 @@ async function registerRoutes() {
     }
   });
 
-  // Users route
-  fastify.get('/api/users', async (request, reply) => {
+  // Get single application (protected)
+  fastify.get('/api/applications/:id', {
+    preHandler: [authenticate]
+  }, async (request, reply) => {
     try {
-      const users = await fastify.prisma.user.findMany({
-        select: {
-          id: true,
-          email: true,
-          fullName: true,
-          profilePicture: true,
-          isActive: true,
-          createdAt: true
+      const { id } = request.params as any;
+
+      const application = await fastify.prisma.application.findFirst({
+        where: {
+          id,
+          userId: request.user!.userId
+        },
+        include: {
+          documents: true,
+          statusHistory: {
+            orderBy: {
+              changedAt: 'desc'
+            }
+          },
+          reminders: {
+            orderBy: {
+              reminderDate: 'asc'
+            }
+          }
         }
       });
 
+      if (!application) {
+        return reply.code(404).send({
+          success: false,
+          error: 'Application not found'
+        });
+      }
+
       return {
         success: true,
-        data: users,
-        total: users.length
+        data: application
       };
     } catch (error) {
-      fastify.log.error('Error fetching users:', error);
+      fastify.log.error('Error fetching application:', error);
       reply.code(500);
       return {
         success: false,
-        error: 'Failed to fetch users'
+        error: 'Failed to fetch application'
+      };
+    }
+  });
+
+  // Dashboard stats (protected)
+  fastify.get('/api/dashboard/stats', {
+    preHandler: [authenticate]
+  }, async (request, reply) => {
+    try {
+      const userId = request.user!.userId;
+
+      const [totalApplications, statusCounts, recentApplications] = await Promise.all([
+        // Total applications
+        fastify.prisma.application.count({
+          where: { userId }
+        }),
+        // Applications by status
+        fastify.prisma.application.groupBy({
+          by: ['status'],
+          where: { userId },
+          _count: true
+        }),
+        // Recent applications
+        fastify.prisma.application.findMany({
+          where: { userId },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          select: {
+            id: true,
+            companyName: true,
+            position: true,
+            status: true,
+            applicationDate: true
+          }
+        })
+      ]);
+
+      return {
+        success: true,
+        data: {
+          totalApplications,
+          statusCounts: statusCounts.map(item => ({
+            status: item.status,
+            count: item._count
+          })),
+          recentApplications
+        }
+      };
+    } catch (error) {
+      fastify.log.error('Error fetching dashboard stats:', error);
+      reply.code(500);
+      return {
+        success: false,
+        error: 'Failed to fetch dashboard stats'
       };
     }
   });
@@ -167,6 +276,19 @@ process.on('SIGTERM', gracefulShutdown);
 // Start server
 async function start() {
   try {
+    // Check required environment variables
+    const requiredEnvVars = [
+      'DATABASE_URL',
+      'JWT_SECRET',
+      'JWT_REFRESH_SECRET'
+    ];
+
+    for (const envVar of requiredEnvVars) {
+      if (!process.env[envVar]) {
+        throw new Error(`Missing required environment variable: ${envVar}`);
+      }
+    }
+
     // Register plugins and routes
     await registerPlugins();
     await registerRoutes();
@@ -179,6 +301,7 @@ async function start() {
 
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    console.log(`🔐 Auth endpoints ready at: http://localhost:${PORT}/api/auth`);
   } catch (err) {
     console.error('Error starting server:', err);
     process.exit(1);

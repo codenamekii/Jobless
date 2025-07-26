@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@prisma/client": ["packages/database/node_modules/@prisma/client"]
+    }
+  }
+}
