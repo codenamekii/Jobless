@@ -16,7 +16,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import DashboardLayout from '../../components/dashboard-layout';
+import { DashboardLayout } from '../../components/dashboard-layout';
 import { BackgroundGradient } from '../../components/ui/background-gradient';
 import { API_BASE_URL, cn, formatDate, getJobTypeIcon, getStatusColor } from '../../lib/utils';
 

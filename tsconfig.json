@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".", // penting untuk aktivasi "paths"
     "paths": {
       "@prisma/client": ["packages/database/node_modules/@prisma/client"]
     }

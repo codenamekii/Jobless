@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    appDir: true,
   },
   images: {
     domains: ['images.unsplash.com', 'via.placeholder.com'],
@@ -95,7 +94,7 @@ const nextConfig = {
   compress: true,
 
   // Configure output for production
-  output: 'standalone',
+  // output: 'standalone',
 
   // Configure TypeScript
   typescript: {
@@ -116,4 +115,4 @@ const nextConfig = {
   // },
 };
 
-module.exports = nextConfig;
+module.exports = nextConfig

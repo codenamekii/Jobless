@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { Toaster } from 'react-hot-toast'
+import { AuthProvider } from '../lib/auth/auth-context'
 import { cn } from '../lib/utils'
 import './global.css'
 
@@ -77,11 +79,36 @@ export default function RootLayout({
         inter.className,
         "min-h-screen bg-black antialiased overflow-x-hidden"
       )}>
-        <div className="relative flex min-h-screen flex-col">
-          <div className="flex-1">
-            {children}
+        <AuthProvider>
+          <div className="relative flex min-h-screen flex-col">
+            <div className="flex-1">
+              {children}
+            </div>
           </div>
-        </div>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#1a1a1a',
+                color: '#fff',
+                border: '1px solid #333',
+              },
+              success: {
+                iconTheme: {
+                  primary: '#10b981',
+                  secondary: '#fff',
+                },
+              },
+              error: {
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: '#fff',
+                },
+              },
+            }}
+          />
+        </AuthProvider>
       </body>
     </html>
   )

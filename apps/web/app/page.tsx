@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import DashboardLayout from '../components/dashboard-layout';
+import { DashboardLayout } from '../components/dashboard-layout';
 import { BackgroundGradient } from '../components/ui/background-gradient';
 import { HoverEffect } from '../components/ui/card-hover-effect';
 import { API_BASE_URL, cn, formatDate } from '../lib/utils';
