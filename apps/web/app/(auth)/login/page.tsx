@@ -1,5 +1,5 @@
-import { LoginForm } from '@/components/auth/login-form';
-import { BackgroundGradient } from '@/components/ui/background-gradient';
+import { LoginForm } from 'components/auth/login-form';
+import { BackgroundGradient } from 'components/ui/background-gradient';
 
 export default function LoginPage() {
   return (

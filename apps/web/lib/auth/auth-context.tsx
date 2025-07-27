@@ -1,4 +1,3 @@
-// apps/web/lib/auth/auth-context.tsx
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -37,6 +36,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
+      // Check if we're in the browser
+      if (typeof window === 'undefined') {
+        setLoading(false);
+        return;
+      }
+
       const token = localStorage.getItem('accessToken');
       if (!token) {
         setLoading(false);
@@ -51,8 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await refreshToken();
       } catch (refreshError) {
         // Refresh failed, clear tokens
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+        }
       }
     } finally {
       setLoading(false);
@@ -64,8 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authClient.login(email, password);
 
       // Store tokens
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('accessToken', response.accessToken);
+        localStorage.setItem('refreshToken', response.refreshToken);
+      }
 
       // Set user
       setUser(response.user);
@@ -85,8 +94,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authClient.register(email, password, fullName);
 
       // Store tokens
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('accessToken', response.accessToken);
+        localStorage.setItem('refreshToken', response.refreshToken);
+      }
 
       // Set user
       setUser(response.user);
@@ -103,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
       if (refreshToken) {
         await authClient.logout(refreshToken);
       }
@@ -111,8 +122,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Ignore logout errors
     } finally {
       // Clear tokens and user
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+      }
       setUser(null);
 
       // Redirect to login
@@ -123,6 +136,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshToken = async () => {
     try {
+      if (typeof window === 'undefined') {
+        throw new Error('Not in browser');
+      }
+
       const storedRefreshToken = localStorage.getItem('refreshToken');
       if (!storedRefreshToken) {
         throw new Error('No refresh token');

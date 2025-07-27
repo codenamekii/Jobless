@@ -26,20 +26,8 @@ const nextConfig = {
   reactStrictMode: true,
 
   // Configure webpack for better performance
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Optimize bundle size
-    config.optimization.splitChunks = {
-      chunks: 'all',
-      cacheGroups: {
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          chunks: 'all',
-        },
-      },
-    };
-
-    return config;
+  webpack: (config) => {
+    return config; // jangan override splitChunks
   },
 
   // Configure headers for security and performance

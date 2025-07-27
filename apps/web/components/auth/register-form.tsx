@@ -1,12 +1,12 @@
 'use client';
 
-import { useAuth } from '@/lib/auth/auth-context';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Lock, Mail, User } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { useAuth } from '../../lib/auth/auth-context';
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),

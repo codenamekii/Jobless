@@ -1,7 +1,7 @@
 'use client';
 
-import { useAuth } from '@/lib/auth/auth-context';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useAuth } from 'lib/auth/auth-context';
 import { Loader2, Lock, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -14,7 +14,6 @@ const loginSchema = z.object({
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
-
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();

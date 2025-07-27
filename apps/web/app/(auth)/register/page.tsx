@@ -1,5 +1,5 @@
-import { RegisterForm } from '@/components/auth/register-form';
-import { BackgroundGradient } from '@/components/ui/background-gradient';
+import { BackgroundGradient } from 'components/ui/background-gradient';
+import { RegisterForm } from '../../../components/auth/register-form';
 
 export default function RegisterPage() {
   return (
