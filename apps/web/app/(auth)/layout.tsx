@@ -1,20 +1,11 @@
-import { BackgroundGradient } from '../../components/ui/background-gradient';
-
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden">
-      {/* Background effects */}
-      <BackgroundGradient />
-
-      {/* Grid pattern */}
-      <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
-
-      {/* Content */}
-      <div className="relative z-10 w-full max-w-md px-4">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {children}
       </div>
     </div>
